@@ -1,15 +1,12 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::stdin;
 
 fn main() {
-    let input = File::open("2022/1/input.txt").expect("Input file not found");
-    let reader = BufReader::new(input);
-
     let mut curr_cal = 0;
     let mut first = 0;
     let mut second = 0;
     let mut third = 0;
-    for line in reader.lines() {
+
+    for line in stdin().lines() {
         let content = line.unwrap();
         if content.is_empty() {
             if curr_cal > first {
