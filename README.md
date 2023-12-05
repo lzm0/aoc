@@ -20,3 +20,7 @@ To run the tests:
 ```bash
 cargo test --bin <year>-<day>
 ```
+
+## License
+
+This project is licensed under the [MIT](LICENSE) license.
