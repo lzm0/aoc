@@ -1,6 +1,6 @@
 use std::fs;
 
-type Almanac = (Vec<u32>, Vec<Vec<(u32, u32, u32)>>);
+type Almanac = (Vec<u64>, Vec<Vec<(u64, u64, u64)>>);
 
 fn parse_input(input: &str) -> Almanac {
     let mut sections = input.split("\n\n");
@@ -17,12 +17,10 @@ fn parse_input(input: &str) -> Almanac {
     let mut maps = Vec::new();
 
     while let Some(section) = sections.next() {
-        if section.chars().nth(0).unwrap().is_alphabetic() {
-            continue;
-        }
         maps.push(
             section
-                .split("\n")
+                .lines()
+                .skip(1)
                 .map(|line| {
                     let mut iter = line.split_whitespace();
                     (
@@ -38,13 +36,49 @@ fn parse_input(input: &str) -> Almanac {
     (seeds, maps)
 }
 
-fn part_one(almanac: &Almanac) -> u32 {
+fn part_one(almanac: &Almanac) -> u64 {
     let (seeds, maps) = almanac;
-    0
+    seeds
+        .iter()
+        .map(|&seed| {
+            let mut num = seed;
+            for map in maps {
+                num = map
+                    .iter()
+                    .find(|(_, src, len)| src <= &num && num < src + len)
+                    .map(|(dst, src, _)| dst + &num - src)
+                    .unwrap_or(num);
+            }
+            num
+        })
+        .min()
+        .unwrap()
 }
 
-fn part_two(almanac: &Almanac) -> u32 {
-    todo!()
+fn part_two(almanac: &Almanac) -> u64 {
+    let (ranges, maps) = almanac;
+    let seeds = ranges
+        .chunks(2)
+        .map(|range| {
+            let start = range[0];
+            let len = range[1];
+            start..(start + len)
+        })
+        .flatten();
+    seeds
+        .map(|seed| {
+            let mut num = seed;
+            for map in maps {
+                num = map
+                    .iter()
+                    .find(|(_, src, len)| src <= &num && num < src + len)
+                    .map(|(dst, src, _)| dst + &num - src)
+                    .unwrap_or(num);
+            }
+            num
+        })
+        .min()
+        .unwrap()
 }
 
 fn main() {
@@ -52,12 +86,14 @@ fn main() {
     let almanac = parse_input(&input);
 
     println!("Part one: {}", part_one(&almanac));
-    // println!("Part two: {}", part_two(&almanac));
+    println!("Part two: {}", part_two(&almanac));
 }
 
-#[test]
-fn test_part_one() {
-    let input = "seeds: 79 14 55 13
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_INPUT: &'static str = "seeds: 79 14 55 13
 
 seed-to-soil map:
 50 98 2
@@ -90,11 +126,16 @@ temperature-to-humidity map:
 humidity-to-location map:
 60 56 37
 56 93 4";
-    let almanac = parse_input(&input);
-    assert_eq!(part_one(&almanac), 35)
-}
 
-#[test]
-fn test_part_two() {
-    todo!()
+    #[test]
+    fn test_part_one() {
+        let almanac = parse_input(TEST_INPUT);
+        assert_eq!(part_one(&almanac), 35)
+    }
+
+    #[test]
+    fn test_part_two() {
+        let almanac = parse_input(TEST_INPUT);
+        assert_eq!(part_two(&almanac), 46)
+    }
 }
