@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::fs;
 
 type Almanac = (Vec<u64>, Vec<Vec<(u64, u64, u64)>>);
@@ -59,6 +60,7 @@ fn part_two(almanac: &Almanac) -> u64 {
     let (seeds, maps) = almanac;
     seeds
         .chunks(2)
+        .par_bridge()
         .map(|range| {
             let start = range[0];
             let len = range[1];
