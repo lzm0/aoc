@@ -46,7 +46,7 @@ fn part_two(games: &Vec<Game>) -> u32 {
     sum
 }
 
-fn parse_input(input: String) -> Vec<Game> {
+fn parse(input: String) -> Vec<Game> {
     input
         .lines()
         .map(|game| {
@@ -78,7 +78,7 @@ fn parse_input(input: String) -> Vec<Game> {
 
 fn main() {
     let input = fs::read_to_string("src/input/2023-02.txt").unwrap();
-    let games = parse_input(input);
+    let games = parse(input);
 
     println!("Part one: {}", part_one(&games));
     println!("Part two: {}", part_two(&games));

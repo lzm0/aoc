@@ -2,7 +2,7 @@ use std::fs;
 
 type Almanac = (Vec<u64>, Vec<Vec<(u64, u64, u64)>>);
 
-fn parse_input(input: &str) -> Almanac {
+fn parse(input: &str) -> Almanac {
     let mut sections = input.split("\n\n");
 
     let seeds = sections
@@ -83,7 +83,7 @@ fn part_two(almanac: &Almanac) -> u64 {
 
 fn main() {
     let input = fs::read_to_string("src/input/2023-05.txt").unwrap();
-    let almanac = parse_input(&input);
+    let almanac = parse(&input);
 
     println!("Part one: {}", part_one(&almanac));
     println!("Part two: {}", part_two(&almanac));
@@ -129,13 +129,13 @@ humidity-to-location map:
 
     #[test]
     fn test_part_one() {
-        let almanac = parse_input(TEST_INPUT);
+        let almanac = parse(TEST_INPUT);
         assert_eq!(part_one(&almanac), 35)
     }
 
     #[test]
     fn test_part_two() {
-        let almanac = parse_input(TEST_INPUT);
+        let almanac = parse(TEST_INPUT);
         assert_eq!(part_two(&almanac), 46)
     }
 }
