@@ -56,16 +56,15 @@ fn part_one(almanac: &Almanac) -> u64 {
 }
 
 fn part_two(almanac: &Almanac) -> u64 {
-    let (ranges, maps) = almanac;
-    let seeds = ranges
+    let (seeds, maps) = almanac;
+    seeds
         .chunks(2)
         .map(|range| {
             let start = range[0];
             let len = range[1];
             start..(start + len)
         })
-        .flatten();
-    seeds
+        .flatten()
         .map(|seed| {
             let mut num = seed;
             for map in maps {
