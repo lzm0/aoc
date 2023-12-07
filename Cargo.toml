@@ -4,4 +4,5 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
+indoc = "2.0.4"
 rayon = "1.8.0"
