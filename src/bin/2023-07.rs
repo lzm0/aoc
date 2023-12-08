@@ -37,45 +37,29 @@ fn hand_type(hand: &Hand) -> HandType {
         map
     });
 
-    let mut frequencies: Vec<&i32> = count.values().collect::<Vec<_>>();
     let joker_count = *count.get(&Card::Joker).unwrap_or(&0);
+
+    let mut frequencies = count
+        .clone()
+        .drain()
+        .filter(|&(k, _)| k != Card::Joker)
+        .map(|(_, v)| v)
+        .collect::<Vec<_>>();
+
+    if frequencies.len() == 0 {
+        return HandType::FiveOfAKind;
+    }
+
     frequencies.sort();
+    *frequencies.last_mut().unwrap() += joker_count;
+
     match frequencies.as_slice() {
-        [1, 1, 1, 1, 1] => match joker_count {
-            0 => HandType::HighCard,
-            1 => HandType::OnePair,
-            _ => unreachable!(),
-        },
-        [1, 1, 1, 2] => match joker_count {
-            0 => HandType::OnePair,
-            1 => HandType::ThreeOfAKind,
-            2 => HandType::ThreeOfAKind,
-            _ => unreachable!(),
-        },
-        [1, 2, 2] => match joker_count {
-            0 => HandType::TwoPair,
-            1 => HandType::FullHouse,
-            2 => HandType::FourOfAKind,
-            _ => unreachable!(),
-        },
-        [1, 1, 3] => match joker_count {
-            0 => HandType::ThreeOfAKind,
-            1 => HandType::FourOfAKind,
-            3 => HandType::FourOfAKind,
-            _ => unreachable!(),
-        },
-        [2, 3] => match joker_count {
-            0 => HandType::FullHouse,
-            2 => HandType::FiveOfAKind,
-            3 => HandType::FiveOfAKind,
-            _ => unreachable!(),
-        },
-        [1, 4] => match joker_count {
-            0 => HandType::FourOfAKind,
-            1 => HandType::FiveOfAKind,
-            4 => HandType::FiveOfAKind,
-            _ => unreachable!(),
-        },
+        [1, 1, 1, 1, 1] => HandType::HighCard,
+        [1, 1, 1, 2] => HandType::OnePair,
+        [1, 2, 2] => HandType::TwoPair,
+        [1, 1, 3] => HandType::ThreeOfAKind,
+        [2, 3] => HandType::FullHouse,
+        [1, 4] => HandType::FourOfAKind,
         [5] => HandType::FiveOfAKind,
         _ => unreachable!(),
     }
