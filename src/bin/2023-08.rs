@@ -61,34 +61,46 @@ fn part_one((instruction, network): &(Instruction, Network)) -> usize {
 }
 
 fn part_two((instruction, network): &(Instruction, Network)) -> usize {
-    let mut current = network
-        .keys()
-        .filter(|&[_, _, x]| *x == 'A')
-        .map(|&x| x)
-        .collect::<Vec<_>>();
-    let mut count = 0;
+    let starts = network.keys().filter(|&[_, _, x]| *x == 'A').map(|&x| x);
 
-    let mut all = false;
-    while !all {
-        for direction in instruction {
-            all = true;
-            for i in 0..current.len() {
-                let &(left, right) = network.get(&current[i]).unwrap();
-                current[i] = match direction {
-                    Direction::L => left,
-                    Direction::R => right,
-                };
-                if current[i][2] != 'Z' {
-                    all = false;
+    let counts = starts
+        .map(|x| {
+            let mut count = 0;
+            let mut current = x.clone();
+            while current[2] != 'Z' {
+                for direction in instruction {
+                    let &(left, right) = network.get(&current).unwrap();
+                    current = match direction {
+                        Direction::L => left,
+                        Direction::R => right,
+                    };
+                    count += 1;
+                    if current[2] == 'Z' {
+                        break;
+                    }
                 }
             }
-            count += 1;
-            if all {
-                break;
-            }
-        }
+            count
+        })
+        .collect::<Vec<_>>();
+
+    lcm_all(&counts)
+}
+
+fn lcm_all(numbers: &[usize]) -> usize {
+    numbers.iter().fold(1, |acc, &x| lcm(acc, x))
+}
+
+fn lcm(a: usize, b: usize) -> usize {
+    a * b / gcd(a, b)
+}
+
+fn gcd(a: usize, b: usize) -> usize {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
     }
-    count
 }
 
 fn main() {
@@ -149,5 +161,11 @@ mod tests {
     #[test]
     fn test_part_two() {
         assert_eq!(part_two(&parse(EXAMPLE_THREE)), 6);
+    }
+
+    #[test]
+    fn test_lcm_all() {
+        assert_eq!(lcm_all(&[2, 3, 4]), 12);
+        assert_eq!(lcm_all(&Vec::from_iter(1..10)), 2520);
     }
 }
