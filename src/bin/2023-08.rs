@@ -6,7 +6,7 @@ enum Direction {
 }
 type Node = [char; 3];
 type Instruction = Vec<Direction>;
-type Network = HashMap<Node, (Node, Node)>;
+type Network = HashMap<Node, [Node; 2]>;
 
 fn parse(input: &str) -> (Instruction, Network) {
     let mut iter = input.lines();
@@ -33,7 +33,7 @@ fn parse(input: &str) -> (Instruction, Network) {
             })
             .unwrap();
 
-        map.insert(key, (left, right));
+        map.insert(key, [left, right]);
         map
     });
     (instruction, network)
@@ -45,7 +45,7 @@ fn part_one((instruction, network): &(Instruction, Network)) -> usize {
 
     while current != ['Z', 'Z', 'Z'] {
         for direction in instruction {
-            let &(left, right) = network.get(&current).unwrap();
+            let &[left, right] = network.get(&current).unwrap();
             current = match direction {
                 Direction::L => left,
                 Direction::R => right,
@@ -69,7 +69,7 @@ fn part_two((instruction, network): &(Instruction, Network)) -> usize {
             let mut current = x.clone();
             while current[2] != 'Z' {
                 for direction in instruction {
-                    let &(left, right) = network.get(&current).unwrap();
+                    let &[left, right] = network.get(&current).unwrap();
                     current = match direction {
                         Direction::L => left,
                         Direction::R => right,
