@@ -48,20 +48,29 @@ fn parse(input: &str) -> Vec<Vec<Tile>> {
 }
 
 fn part_one(sketch: &Vec<Vec<Tile>>) -> usize {
+    find_loop(sketch).len() / 2
+}
+
+fn find_loop(sketch: &Vec<Vec<Tile>>) -> Vec<(usize, usize)> {
     let m = sketch.len();
     let n = sketch[0].len();
 
     let start = find_start(sketch);
-    let mut stack = vec![(start, 0)];
+    let mut stack = vec![(start, Vec::new())];
     let mut visited = HashSet::new();
 
     while stack.len() > 0 {
-        let ((x, y), depth) = stack.pop().unwrap();
+        let ((x, y), path) = stack.pop().unwrap();
         let current = sketch[x][y];
-        println!("Popping {:?} at {:?} at depth {:?}", current, (x, y), depth);
+        println!(
+            "Popping {:?} at {:?} at depth {:?}",
+            current,
+            (x, y),
+            path.len()
+        );
 
-        if current == Tile::Start && depth > 2 {
-            return depth / 2;
+        if current == Tile::Start && path.len() > 2 {
+            return path;
         }
         if visited.contains(&(x, y)) {
             continue;
@@ -90,6 +99,10 @@ fn part_one(sketch: &Vec<Vec<Tile>>) -> usize {
             if nx < 0 || nx >= m as isize || ny < 0 || ny >= n as isize {
                 continue;
             }
+            if visited.contains(&(nx as usize, ny as usize)) && start != (nx as usize, ny as usize)
+            {
+                continue;
+            }
             let next = sketch[nx as usize][ny as usize];
             match next {
                 Tile::Pipe(next_directions) => {
@@ -105,9 +118,11 @@ fn part_one(sketch: &Vec<Vec<Tile>>) -> usize {
                 "Pushing {:?} at {:?} at depth {:?}",
                 next,
                 (nx, ny),
-                depth + 1
+                path.len() + 1
             );
-            stack.push(((nx as usize, ny as usize), depth + 1));
+            let mut new_path = path.clone();
+            new_path.push((nx as usize, ny as usize));
+            stack.push(((nx as usize, ny as usize), new_path));
         }
     }
     unreachable!()
@@ -266,5 +281,36 @@ mod test_part_two {
     #[test]
     fn example_four() {
         assert_eq!(part_one(&parse(EXAMPLE_FOUR)), 10);
+    }
+}
+
+#[cfg(test)]
+mod test_find_loop {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE: &'static str = indoc! {"
+        .....
+        .S-7.
+        .|.|.
+        .L-J.
+        .....
+    "};
+
+    #[test]
+    fn example() {
+        assert_eq!(
+            find_loop(&parse(EXAMPLE)),
+            vec![
+                (2, 1),
+                (3, 1),
+                (3, 2),
+                (3, 3),
+                (2, 3),
+                (1, 3),
+                (1, 2),
+                (1, 1)
+            ]
+        );
     }
 }
