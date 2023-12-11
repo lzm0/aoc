@@ -19,7 +19,7 @@ fn parse(input: &str) -> Vec<Vec<Pixel>> {
         .collect()
 }
 
-fn part_one(image: &Vec<Vec<Pixel>>) -> usize {
+fn solve(image: &Vec<Vec<Pixel>>, expansion: usize) -> usize {
     let row_indices = image
         .iter()
         .scan(0, |state, row| {
@@ -27,7 +27,7 @@ fn part_one(image: &Vec<Vec<Pixel>>) -> usize {
             if row.contains(&Pixel::Galaxy) {
                 *state += 1;
             } else {
-                *state += 2;
+                *state += expansion;
             }
             index
         })
@@ -38,7 +38,7 @@ fn part_one(image: &Vec<Vec<Pixel>>) -> usize {
             if image.iter().any(|row| row[i] == Pixel::Galaxy) {
                 *state += 1;
             } else {
-                *state += 2;
+                *state += expansion;
             }
             index
         })
@@ -74,11 +74,19 @@ fn part_one(image: &Vec<Vec<Pixel>>) -> usize {
         .sum()
 }
 
+fn part_one(image: &Vec<Vec<Pixel>>) -> usize {
+    solve(image, 2)
+}
+
+fn part_two(image: &Vec<Vec<Pixel>>) -> usize {
+    solve(image, 1_000_000)
+}
+
 fn main() {
     let image = parse(include_str!("../input/2023-11.txt"));
 
     println!("Part one: {}", part_one(&image));
-    // println!("Part two: {}", part_two(input));
+    println!("Part two: {}", part_two(&image));
 }
 
 #[cfg(test)]
@@ -102,5 +110,15 @@ mod tests {
     #[test]
     fn test_part_one() {
         assert_eq!(part_one(&parse(EXAMPLE)), 374);
+    }
+
+    #[test]
+    fn test_solve_10() {
+        assert_eq!(solve(&parse(EXAMPLE), 10), 1030);
+    }
+
+    #[test]
+    fn test_solve_100() {
+        assert_eq!(solve(&parse(EXAMPLE), 100), 8410);
     }
 }
