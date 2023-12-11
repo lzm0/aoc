@@ -57,17 +57,18 @@ fn part_one(sketch: &Vec<Vec<Tile>>) -> usize {
 
     while stack.len() > 0 {
         let ((x, y), depth) = stack.pop().unwrap();
-        println!("Popping {:?} at {:?}", sketch[x][y], (x, y));
+        let current = sketch[x][y];
+        println!("Popping {:?} at {:?} at depth {:?}", current, (x, y), depth);
 
-        if (x, y) == start && depth > 0 {
+        if current == Tile::Start && depth > 2 {
             return depth / 2;
         }
-
         if visited.contains(&(x, y)) {
             continue;
         }
+        visited.insert((x, y));
 
-        let directions = match sketch[x][y] {
+        let directions = match current {
             Tile::Pipe(d) => d.to_vec(),
             Tile::Ground => unreachable!(),
             Tile::Start => vec![
@@ -86,11 +87,10 @@ fn part_one(sketch: &Vec<Vec<Tile>>) -> usize {
                 Direction::West => (0, -1),
             };
             let (nx, ny) = (x as isize + dx, y as isize + dy);
-            if nx < 0 || nx >= n as isize || ny < 0 || ny >= m as isize {
+            if nx < 0 || nx >= m as isize || ny < 0 || ny >= n as isize {
                 continue;
             }
             let next = sketch[nx as usize][ny as usize];
-            println!("Found {:?}", next);
             match next {
                 Tile::Pipe(next_directions) => {
                     if !next_directions.contains(&direction.opposite()) {
@@ -101,13 +101,20 @@ fn part_one(sketch: &Vec<Vec<Tile>>) -> usize {
                 Tile::Start => (),
             }
 
-            println!("Pushing {:?} at {:?} ", next, (nx, ny));
+            println!(
+                "Pushing {:?} at {:?} at depth {:?}",
+                next,
+                (nx, ny),
+                depth + 1
+            );
             stack.push(((nx as usize, ny as usize), depth + 1));
         }
-
-        visited.insert((x, y));
     }
     unreachable!()
+}
+
+fn part_two(sketch: &Vec<Vec<Tile>>) -> usize {
+    0
 }
 
 fn find_start(sketch: &Vec<Vec<Tile>>) -> (usize, usize) {
@@ -125,11 +132,11 @@ fn main() {
     let input = fs::read_to_string("src/input/2023-10.txt").unwrap();
 
     println!("Part one: {}", part_one(&parse(&input)));
-    // println!("Part two: {}", part_two(&parse(&input)));
+    println!("Part two: {}", part_two(&parse(&input)));
 }
 
 #[cfg(test)]
-mod tests {
+mod test_part_one {
     use super::*;
     use indoc::indoc;
 
@@ -166,27 +173,98 @@ mod tests {
     "};
 
     #[test]
-    fn test_part_one_example_one_simple() {
+    fn example_one_simple() {
         assert_eq!(part_one(&parse(EXAMPLE_ONE_SIMPLE)), 4);
     }
 
     #[test]
-    fn test_part_one_example_one() {
+    fn example_one() {
         assert_eq!(part_one(&parse(EXAMPLE_ONE)), 4);
     }
 
     #[test]
-    fn test_part_one_example_two_simple() {
+    fn example_two_simple() {
         assert_eq!(part_one(&parse(EXAMPLE_TWO_SIMPLE)), 8);
     }
 
     #[test]
-    fn test_part_one_example_two() {
+    fn example_two() {
         assert_eq!(part_one(&parse(EXAMPLE_TWO)), 8);
     }
+}
 
-    // #[test]
-    // fn test_part_two() {
-    //     assert_eq!(part_two(&parse(EXAMPLE)), 8);
-    // }
+#[cfg(test)]
+mod test_part_two {
+    use super::*;
+    use indoc::indoc;
+
+    const EXAMPLE_ONE: &'static str = indoc! {"
+        ...........
+        .S-------7.
+        .|F-----7|.
+        .||.....||.
+        .||.....||.
+        .|L-7.F-J|.
+        .|..|.|..|.
+        .L--J.L--J.
+        ...........
+    "};
+
+    const EXAMPLE_TWO: &'static str = indoc! {"
+        ..........
+        .S------7.
+        .|F----7|.
+        .||....||.
+        .||....||.
+        .|L-7F-J|.
+        .|..||..|.
+        .L--JL--J.
+        ..........
+    "};
+
+    const EXAMPLE_THREE: &'static str = indoc! {"
+        .F----7F7F7F7F-7....
+        .|F--7||||||||FJ....
+        .||.FJ||||||||L7....
+        FJL7L7LJLJ||LJ.L-7..
+        L--J.L7...LJS7F-7L7.
+        ....F-J..F7FJ|L7L7L7
+        ....L7.F7||L7|.L7L7|
+        .....|FJLJ|FJ|F7|.LJ
+        ....FJL-7.||.||||...
+        ....L---J.LJ.LJLJ...
+    "};
+
+    const EXAMPLE_FOUR: &'static str = indoc! {"
+        FF7FSF7F7F7F7F7F---7
+        L|LJ||||||||||||F--J
+        FL-7LJLJ||||||LJL-77
+        F--JF--7||LJLJ7F7FJ-
+        L---JF-JLJ.||-FJLJJ7
+        |F|F-JF---7F7-L7L|7|
+        |FFJF7L7F-JF7|JL---7
+        7-L-JL7||F7|L7F-7F7|
+        L.L7LFJ|||||FJL7||LJ
+        L7JLJL-JLJLJL--JLJ.L
+    "};
+
+    #[test]
+    fn example_one() {
+        assert_eq!(part_one(&parse(EXAMPLE_ONE)), 4);
+    }
+
+    #[test]
+    fn example_two() {
+        assert_eq!(part_one(&parse(EXAMPLE_TWO)), 4);
+    }
+
+    #[test]
+    fn example_three() {
+        assert_eq!(part_one(&parse(EXAMPLE_THREE)), 8);
+    }
+
+    #[test]
+    fn example_four() {
+        assert_eq!(part_one(&parse(EXAMPLE_FOUR)), 10);
+    }
 }
