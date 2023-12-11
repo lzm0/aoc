@@ -17,6 +17,15 @@ impl Direction {
             Direction::West => Direction::East,
         }
     }
+
+    fn to_offset(&self) -> (isize, isize) {
+        match self {
+            Direction::North => (-1, 0),
+            Direction::East => (0, 1),
+            Direction::South => (1, 0),
+            Direction::West => (0, -1),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -89,12 +98,7 @@ fn find_loop(sketch: &Vec<Vec<Tile>>) -> Vec<(usize, usize)> {
         };
         for direction in directions {
             println!("Going {:?} ", direction);
-            let (dx, dy) = match direction {
-                Direction::North => (-1, 0),
-                Direction::East => (0, 1),
-                Direction::South => (1, 0),
-                Direction::West => (0, -1),
-            };
+            let (dx, dy) = direction.to_offset();
             let (nx, ny) = (x as isize + dx, y as isize + dy);
             if nx < 0 || nx >= m as isize || ny < 0 || ny >= n as isize {
                 continue;
@@ -129,7 +133,95 @@ fn find_loop(sketch: &Vec<Vec<Tile>>) -> Vec<(usize, usize)> {
 }
 
 fn part_two(sketch: &Vec<Vec<Tile>>) -> usize {
-    0
+    let m = sketch.len();
+    let n = sketch[0].len();
+    let mut scaled = vec![vec![Tile::Ground; n * 3]; m * 3];
+    let the_loop = find_loop(sketch);
+
+    for &(x, y) in the_loop.iter() {
+        let current = sketch[x][y];
+        scaled[x * 3 + 1][y * 3 + 1] = current;
+        let directions = match current {
+            Tile::Pipe(directions) => directions.to_vec(),
+            Tile::Start => vec![
+                Direction::North,
+                Direction::East,
+                Direction::South,
+                Direction::West,
+            ],
+            _ => vec![],
+        };
+        for direction in directions {
+            let (dx, dy) = direction.to_offset();
+            let (nx, ny) = (
+                (x as isize * 3 + 1 + dx) as usize,
+                (y as isize * 3 + 1 + dy) as usize,
+            );
+            scaled[nx][ny] = current;
+        }
+    }
+
+    let mut stack = vec![(0, 0)];
+    let mut visited = HashSet::new();
+    while !stack.is_empty() {
+        let (x, y) = stack.pop().unwrap();
+        if visited.contains(&(x, y)) {
+            continue;
+        }
+        visited.insert((x, y));
+
+        for direction in [
+            Direction::North,
+            Direction::East,
+            Direction::South,
+            Direction::West,
+        ] {
+            let (dx, dy) = direction.to_offset();
+            let (nx, ny) = (x as isize + dx, y as isize + dy);
+            if nx < 0 || nx >= 3 * m as isize || ny < 0 || ny >= 3 * n as isize {
+                continue;
+            }
+            if visited.contains(&(nx as usize, ny as usize)) {
+                continue;
+            }
+            let next = scaled[nx as usize][ny as usize];
+            if next != Tile::Ground {
+                continue;
+            }
+
+            stack.push((nx as usize, ny as usize));
+        }
+    }
+    visualize(&scaled);
+    dbg!(the_loop.len());
+    let mut enclosed = 0;
+    for (x, row) in sketch.iter().enumerate() {
+        for (y, _) in row.iter().enumerate() {
+            if !the_loop.contains(&(x, y)) && !visited.contains(&(3 * x + 1, 3 * y + 1)) {
+                enclosed += 1;
+            }
+        }
+    }
+    enclosed
+}
+
+fn visualize(sketch: &Vec<Vec<Tile>>) {
+    for row in sketch.iter() {
+        for tile in row.iter() {
+            match tile {
+                Tile::Pipe([Direction::North, Direction::South]) => print!("|"),
+                Tile::Pipe([Direction::East, Direction::West]) => print!("-"),
+                Tile::Pipe([Direction::North, Direction::East]) => print!("L"),
+                Tile::Pipe([Direction::North, Direction::West]) => print!("J"),
+                Tile::Pipe([Direction::South, Direction::West]) => print!("7"),
+                Tile::Pipe([Direction::South, Direction::East]) => print!("F"),
+                Tile::Pipe(_) => unreachable!(),
+                Tile::Ground => print!("."),
+                Tile::Start => print!("S"),
+            }
+        }
+        println!();
+    }
 }
 
 fn find_start(sketch: &Vec<Vec<Tile>>) -> (usize, usize) {
@@ -265,22 +357,22 @@ mod test_part_two {
 
     #[test]
     fn example_one() {
-        assert_eq!(part_one(&parse(EXAMPLE_ONE)), 4);
+        assert_eq!(part_two(&parse(EXAMPLE_ONE)), 4);
     }
 
     #[test]
     fn example_two() {
-        assert_eq!(part_one(&parse(EXAMPLE_TWO)), 4);
+        assert_eq!(part_two(&parse(EXAMPLE_TWO)), 4);
     }
 
     #[test]
     fn example_three() {
-        assert_eq!(part_one(&parse(EXAMPLE_THREE)), 8);
+        assert_eq!(part_two(&parse(EXAMPLE_THREE)), 8);
     }
 
     #[test]
     fn example_four() {
-        assert_eq!(part_one(&parse(EXAMPLE_FOUR)), 10);
+        assert_eq!(part_two(&parse(EXAMPLE_FOUR)), 10);
     }
 }
 
