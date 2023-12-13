@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 type Record = (Vec<char>, Vec<usize>);
 
 fn parse(input: &str) -> Vec<Record> {
@@ -18,69 +20,39 @@ fn parse(input: &str) -> Vec<Record> {
 
 fn count_arrangements(record: &Record) -> usize {
     let (springs, counts) = record;
-    fn backtrack(springs: &[char], counts: &[usize], group_i: usize, group_len: usize) -> usize {
-        let mut arrangements = 0;
-        dbg!(&springs, &counts, group_i, group_len,);
-        if springs.is_empty() {
-            if group_len > 0 && group_len == counts[group_i] {
-                arrangements += 1;
-                return arrangements;
-            }
+
+    let mut spring_clone = springs.clone();
+    spring_clone.push('.');
+
+    let mut cache: HashMap<(usize, usize), usize> = HashMap::new();
+
+    fn backtrack(
+        springs: &[char],
+        counts: &[usize],
+        cache: &mut HashMap<(usize, usize), usize>,
+    ) -> usize {
+        if counts.is_empty() {
+            return if springs.contains(&'#') { 0 } else { 1 };
+        }
+        if springs.len() < counts.iter().sum::<usize>() + counts.len() {
             return 0;
         }
-        match springs[0] {
-            '?' => {
-                // Case `#`
-                if group_i < counts.len() {
-                    arrangements += backtrack(&springs[1..], counts, group_i, group_len + 1);
-                }
-                // Case `.`
-                if group_len > 0 && group_len == counts[group_i] {
-                    arrangements += backtrack(&springs[1..], counts, group_i + 1, 0);
-                } else {
-                    arrangements += backtrack(&springs[1..], counts, group_i, 0);
-                }
-            }
-            '#' => {
-                if group_len == counts[group_i] {
-                    // When the current group length is longer than it should be
-                    return 0;
-                }
-                arrangements += backtrack(&springs[1..], counts, group_i, group_len + 1);
-            }
-            '.' => {
-                if group_len > 0 {
-                    if group_len == counts[group_i] {
-                        arrangements += backtrack(&springs[1..], counts, group_i + 1, 0);
-                    } else {
-                        return 0;
-                    }
-                } else {
-                    arrangements += backtrack(&springs[1..], counts, group_i, 0);
-                }
-            }
-            _ => unreachable!(),
+        if let Some(&cached) = cache.get(&(springs.len(), counts.len())) {
+            return cached;
         }
-        arrangements
+        let mut arangements = 0;
+        if springs[0] != '#' {
+            arangements += backtrack(&springs[1..], counts, cache);
+        }
+        let next_group_size = counts[0];
+        if !springs[..next_group_size].contains(&'.') && springs[next_group_size] != '#' {
+            arangements += backtrack(&springs[next_group_size + 1..], &counts[1..], cache);
+        }
+        cache.insert((springs.len(), counts.len()), arangements);
+        arangements
     }
-    backtrack(springs, counts, 0, 0)
-}
 
-fn get_contiguous_groups(chars: &[char]) -> Vec<usize> {
-    let mut groups = Vec::new();
-    let mut count = 0;
-    for &c in chars {
-        if c == '#' {
-            count += 1;
-        } else if count > 0 {
-            groups.push(count);
-            count = 0;
-        }
-    }
-    if count > 0 {
-        groups.push(count);
-    }
-    groups
+    backtrack(&spring_clone, counts, &mut cache)
 }
 
 fn part_one(records: &[Record]) -> usize {
@@ -91,22 +63,20 @@ fn part_two(records: &[Record]) -> usize {
     records
         .iter()
         .map(|(springs, counts)| {
-            let left = springs
+            let springs = springs
                 .iter()
                 .chain(['?'].iter())
                 .copied()
                 .cycle()
                 .take(springs.len() * 5 + 4)
                 .collect::<Vec<_>>();
-            let right = counts
+            let counts = counts
                 .iter()
                 .copied()
                 .cycle()
                 .take(counts.len() * 5)
                 .collect::<Vec<_>>();
-            left.iter().for_each(|c| print!("{}", c));
-            println!();
-            count_arrangements(&(left, right))
+            count_arrangements(&(springs, counts))
         })
         .sum()
 }
@@ -139,12 +109,6 @@ mod tests {
     fn test_count_arrangements_very_simple() {
         let record = &parse("### 3")[0];
         assert_eq!(count_arrangements(record), 1);
-    }
-
-    #[test]
-    fn test_get_contiguous_groups() {
-        let chars = ".###.##....#".chars().collect::<Vec<_>>();
-        assert_eq!(get_contiguous_groups(&chars), vec![3, 2, 1]);
     }
 
     const EXAMPLE: &str = indoc! {"
