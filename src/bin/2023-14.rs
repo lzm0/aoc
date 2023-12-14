@@ -1,10 +1,19 @@
-use std::mem;
+enum Direction {
+    North,
+    West,
+    South,
+    East,
+}
 
 fn parse(input: &str) -> Vec<Vec<char>> {
     input
         .lines()
         .map(|line| line.chars().collect::<Vec<_>>())
         .collect()
+}
+
+fn tilt(platform: &Vec<Vec<char>>, direction: Direction) -> Vec<Vec<char>> {
+    todo!()
 }
 
 fn part_one(platform: &Vec<Vec<char>>) -> usize {
@@ -28,13 +37,15 @@ fn part_one(platform: &Vec<Vec<char>>) -> usize {
     load
 }
 
-// fn part_two(platform: &Vec<Vec<char>>) -> usize {}
+fn part_two(platform: &Vec<Vec<char>>) -> usize {
+    todo!()
+}
 
 fn main() {
     let platform = parse(include_str!("../input/2023-14.txt"));
 
     println!("Part one: {}", part_one(&platform));
-    // println!("Part two: {}", part_two(&platform));
+    println!("Part two: {}", part_two(&platform));
 }
 
 #[cfg(test)]
@@ -60,8 +71,8 @@ mod tests {
         assert_eq!(part_one(&parse(EXAMPLE)), 136);
     }
 
-    // #[test]
-    // fn test_part_two() {
-    //     assert_eq!(part_two(&parse(EXAMPLE)), 400);
-    // }
+    #[test]
+    fn test_part_two() {
+        assert_eq!(part_two(&parse(EXAMPLE)), 64);
+    }
 }
