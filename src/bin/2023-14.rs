@@ -1,10 +1,3 @@
-enum Direction {
-    North,
-    West,
-    South,
-    East,
-}
-
 fn parse(input: &str) -> Vec<Vec<char>> {
     input
         .lines()
@@ -12,20 +5,15 @@ fn parse(input: &str) -> Vec<Vec<char>> {
         .collect()
 }
 
-fn tilt(platform: &Vec<Vec<char>>, direction: Direction) -> Vec<Vec<char>> {
-    todo!()
-}
-
-fn part_one(platform: &Vec<Vec<char>>) -> usize {
-    let rows = platform.len();
-    let cols = platform[0].len();
-    let mut load = 0;
-    for col in 0..cols {
+fn tilt(platform: &mut Vec<Vec<char>>) {
+    for col in 0..platform[0].len() {
         let mut slot = 0;
-        for row in 0..rows {
-            match platform[row][col] {
+        for row in 0..platform.len() {
+            let curr = platform[row][col];
+            match curr {
                 'O' => {
-                    load += rows - slot;
+                    platform[row][col] = platform[slot][col];
+                    platform[slot][col] = curr;
                     slot += 1;
                 }
                 '#' => slot = row + 1,
@@ -34,11 +22,63 @@ fn part_one(platform: &Vec<Vec<char>>) -> usize {
             }
         }
     }
-    load
+}
+
+fn clockwise(platform: &mut Vec<Vec<char>>) {
+    let size = platform.len();
+    let mut new = vec![vec!['.'; size]; size];
+    for row in 0..size {
+        for col in 0..size {
+            new[col][size - row - 1] = platform[row][col];
+        }
+    }
+    *platform = new;
+}
+
+fn total_load(platform: &Vec<Vec<char>>) -> usize {
+    platform
+        .iter()
+        .enumerate()
+        .map(|(i, row)| {
+            row.iter()
+                .map(|&c| {
+                    if c == 'O' {
+                        platform.len() - i
+                    } else {
+                        0 as usize
+                    }
+                })
+                .sum::<usize>()
+        })
+        .sum()
+}
+
+fn cycle(platform: &mut Vec<Vec<char>>) {
+    for _ in 0..4 {
+        tilt(platform);
+        clockwise(platform);
+    }
+}
+
+fn part_one(platform: &Vec<Vec<char>>) -> usize {
+    let mut platform = platform.clone();
+    tilt(&mut platform);
+    total_load(&platform)
 }
 
 fn part_two(platform: &Vec<Vec<char>>) -> usize {
-    todo!()
+    let mut platform = platform.clone();
+    let mut seen = vec![platform.clone()];
+
+    loop {
+        cycle(&mut platform);
+        if let Some(i) = seen.iter().position(|x| *x == platform) {
+            let cycle_len = seen.len() - i;
+            let final_state = &seen[i + (1000000000 - i) % cycle_len];
+            return total_load(final_state);
+        }
+        seen.push(platform.clone());
+    }
 }
 
 fn main() {
@@ -65,6 +105,27 @@ mod tests {
         #....###..
         #OO..#....
     "};
+
+    #[test]
+    fn test_tilt() {
+        let mut platform = parse(EXAMPLE);
+        tilt(&mut platform);
+        assert_eq!(
+            platform,
+            parse(indoc! {"
+                OOOO.#.O..
+                OO..#....#
+                OO..O##..O
+                O..#.OO...
+                ........#.
+                ..#....#.#
+                ..O..#.O.O
+                ..O.......
+                #....###..
+                #....#....
+                "})
+        );
+    }
 
     #[test]
     fn test_part_one() {
