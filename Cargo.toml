@@ -6,3 +6,4 @@ version = "0.1.0"
 [dependencies]
 indoc = "2.0.4"
 rayon = "1.8.0"
+pathfinding = "4.6.0"
