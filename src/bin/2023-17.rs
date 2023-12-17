@@ -37,10 +37,13 @@ struct State {
 }
 
 impl State {
-    fn successors(&self, map: &Vec<Vec<u32>>) -> Vec<(State, u32)> {
+    fn successors(&self, map: &Vec<Vec<u32>>, min: u8, max: u8) -> Vec<(State, u32)> {
         let mut successors = Vec::new();
-        let mut directions = self.direction.turn();
-        if self.straight < 3 {
+        let mut directions = Vec::new();
+        if self.straight >= min {
+            directions.extend(self.direction.turn());
+        }
+        if self.straight < max {
             directions.push(self.direction);
         }
         for direction in directions {
@@ -94,15 +97,33 @@ fn part_one(map: &Vec<Vec<u32>>) -> u32 {
         straight: 0,
     };
     let goal = |state: &State| state.success(map);
-    let successors = |state: &State| state.successors(map);
+    let successors = |state: &State| state.successors(map, 0, 3);
     dijkstra(&start, successors, goal).unwrap().1
+}
+
+fn part_two(map: &Vec<Vec<u32>>) -> u32 {
+    [Direction::Down, Direction::Right]
+        .iter()
+        .map(|&direction| {
+            let start = State {
+                x: 0,
+                y: 0,
+                direction: direction,
+                straight: 0,
+            };
+            let goal = |state: &State| state.success(map);
+            let successors = |state: &State| state.successors(map, 4, 10);
+            dijkstra(&start, successors, goal).unwrap().1
+        })
+        .min()
+        .unwrap()
 }
 
 fn main() {
     let map = parse(include_str!("../input/2023-17.txt"));
 
     println!("Part one: {}", part_one(&map));
-    // println!("Part two: {}", part_two(&map));
+    println!("Part two: {}", part_two(&map));
 }
 
 #[cfg(test)]
@@ -131,8 +152,8 @@ mod tests {
         assert_eq!(part_one(&parse(EXAMPLE)), 102);
     }
 
-    // #[test]
-    // fn test_part_two() {
-    //     assert_eq!(part_two(&parse(EXAMPLE)), 64);
-    // }
+    #[test]
+    fn test_part_two() {
+        assert_eq!(part_two(&parse(EXAMPLE)), 94);
+    }
 }
