@@ -1,4 +1,7 @@
-use std::{collections::HashMap, ops::Index};
+use std::{
+    collections::HashMap,
+    ops::{Index, IndexMut},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Category {
@@ -10,14 +13,14 @@ enum Category {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Part {
-    x: u32,
-    m: u32,
-    a: u32,
-    s: u32,
+    x: u64,
+    m: u64,
+    a: u64,
+    s: u64,
 }
 
 impl Index<Category> for Part {
-    type Output = u32;
+    type Output = u64;
 
     fn index(&self, category: Category) -> &Self::Output {
         match category {
@@ -29,10 +32,21 @@ impl Index<Category> for Part {
     }
 }
 
+impl IndexMut<Category> for Part {
+    fn index_mut(&mut self, category: Category) -> &mut Self::Output {
+        match category {
+            Category::X => &mut self.x,
+            Category::M => &mut self.m,
+            Category::A => &mut self.a,
+            Category::S => &mut self.s,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Rule {
-    GreaterThan(Category, u32, Decision),
-    LessThan(Category, u32, Decision),
+    GreaterThan(Category, u64, Decision),
+    LessThan(Category, u64, Decision),
     Unconditional(Decision),
 }
 
@@ -152,7 +166,7 @@ fn organize(part: &Part, name_to_workflow: &HashMap<String, &Workflow>) -> Decis
     }
 }
 
-fn part_one(input: &(Vec<Workflow>, Vec<Part>)) -> u32 {
+fn part_one(input: &(Vec<Workflow>, Vec<Part>)) -> u64 {
     let (workflows, parts) = input;
     let name_to_workflow = workflows
         .iter()
@@ -165,7 +179,7 @@ fn part_one(input: &(Vec<Workflow>, Vec<Part>)) -> u32 {
         .sum()
 }
 
-fn part_two(input: &(Vec<Workflow>, Vec<Part>)) -> u32 {
+fn part_two(input: &(Vec<Workflow>, Vec<Part>)) -> u64 {
     0
 }
 
@@ -206,8 +220,8 @@ mod tests {
         assert_eq!(part_one(&parse(EXAMPLE)), 19114);
     }
 
-    // #[test]
-    // fn test_part_two() {
-    //     assert_eq!(part_two(&parse(EXAMPLE)), 952408144115);
-    // }
+    #[test]
+    fn test_part_two() {
+        assert_eq!(part_two(&parse(EXAMPLE)), 167409079868000);
+    }
 }
