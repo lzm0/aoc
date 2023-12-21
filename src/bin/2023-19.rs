@@ -179,15 +179,154 @@ fn part_one(input: &(Vec<Workflow>, Vec<Part>)) -> u64 {
         .sum()
 }
 
-fn part_two(input: &(Vec<Workflow>, Vec<Part>)) -> u64 {
-    0
+fn part_two(workflows: &Vec<Workflow>) -> u64 {
+    let name_to_workflow = workflows
+        .iter()
+        .map(|workflow| (workflow.name.to_string(), workflow))
+        .collect::<HashMap<_, _>>();
+    let mut stack = vec![(
+        (1, 4000),
+        (1, 4000),
+        (1, 4000),
+        (1, 4000),
+        Decision::SendTo("in".to_string()),
+        0,
+    )];
+    let mut accepted = Vec::new();
+    while let Some(range) = stack.pop() {
+        let (x, m, a, s, decision, rule_key) = range;
+
+        if x.0 > x.1 || m.0 > m.1 || a.0 > a.1 || s.0 > s.1 {
+            continue;
+        }
+
+        match decision {
+            Decision::Accept => {
+                accepted.push((x, m, a, s));
+                continue;
+            }
+            Decision::Reject => continue,
+            Decision::SendTo(workflow_name) => {
+                let workflow = name_to_workflow.get(&workflow_name).unwrap();
+                let rule = &workflow.rules[rule_key];
+                match rule.clone() {
+                    Rule::Unconditional(decision) => {
+                        stack.push((x, m, a, s, decision, 0));
+                    }
+                    Rule::GreaterThan(category, value, decision) => match category {
+                        Category::X => {
+                            stack.push(((value + 1, x.1), m, a, s, decision.clone(), 0));
+                            stack.push((
+                                (x.0, value),
+                                m,
+                                a,
+                                s,
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                        Category::M => {
+                            stack.push((x, (value + 1, m.1), a, s, decision.clone(), 0));
+                            stack.push((
+                                x,
+                                (m.0, value),
+                                a,
+                                s,
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                        Category::A => {
+                            stack.push((x, m, (value + 1, a.1), s, decision.clone(), 0));
+                            stack.push((
+                                x,
+                                m,
+                                (a.0, value),
+                                s,
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                        Category::S => {
+                            stack.push((x, m, a, (value + 1, s.1), decision.clone(), 0));
+                            stack.push((
+                                x,
+                                m,
+                                a,
+                                (s.0, value),
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                    },
+                    Rule::LessThan(category, value, decision) => match category {
+                        Category::X => {
+                            stack.push(((x.0, value - 1), m, a, s, decision.clone(), 0));
+                            stack.push((
+                                (value, x.1),
+                                m,
+                                a,
+                                s,
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                        Category::M => {
+                            stack.push((x, (m.0, value - 1), a, s, decision.clone(), 0));
+                            stack.push((
+                                x,
+                                (value, m.1),
+                                a,
+                                s,
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                        Category::A => {
+                            stack.push((x, m, (a.0, value - 1), s, decision.clone(), 0));
+                            stack.push((
+                                x,
+                                m,
+                                (value, a.1),
+                                s,
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                        Category::S => {
+                            stack.push((x, m, a, (s.0, value - 1), decision.clone(), 0));
+                            stack.push((
+                                x,
+                                m,
+                                a,
+                                (value, s.1),
+                                Decision::SendTo(workflow_name),
+                                rule_key + 1,
+                            ));
+                        }
+                    },
+                };
+            }
+        }
+    }
+
+    accepted
+        .iter()
+        .map(|(x, m, a, s)| {
+            let x = x.1 - x.0 + 1;
+            let m = m.1 - m.0 + 1;
+            let a = a.1 - a.0 + 1;
+            let s = s.1 - s.0 + 1;
+            x * m * a * s
+        })
+        .sum()
 }
 
 fn main() {
     let input = parse(include_str!("../input/2023-19.txt"));
 
     println!("Part one: {}", part_one(&input));
-    println!("Part two: {}", part_two(&input));
+    println!("Part two: {}", part_two(&input.0));
 }
 
 #[cfg(test)]
@@ -222,6 +361,6 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        assert_eq!(part_two(&parse(EXAMPLE)), 167409079868000);
+        assert_eq!(part_two(&parse(EXAMPLE).0), 167409079868000);
     }
 }
