@@ -80,56 +80,98 @@ fn parse(input: &str) -> HashMap<String, Module> {
 }
 
 fn part_one(configuration: &mut HashMap<String, Module>) -> u64 {
-    let mut queue = VecDeque::new();
-    for _ in 0..1000 {
-        queue.push_back(("button".to_string(), "broadcaster".to_string(), Pulse::Low));
-    }
     let mut low_count = 0;
     let mut high_count = 0;
-    while let Some(item) = queue.pop_front() {
-        let (input, name, pulse) = item;
+    for _ in 0..1000 {
+        let mut queue =
+            VecDeque::from([("button".to_string(), "broadcaster".to_string(), Pulse::Low)]);
 
-        match pulse {
-            Pulse::High => high_count += 1,
-            Pulse::Low => low_count += 1,
-        }
+        while let Some(item) = queue.pop_front() {
+            let (input, name, pulse) = item;
 
-        let module = configuration.get_mut(&name).unwrap();
-        let output = match module {
-            Module::FlipFlop { on, .. } => {
-                if pulse == Pulse::Low {
-                    *on = !*on;
-                    if *on {
+            match pulse {
+                Pulse::High => high_count += 1,
+                Pulse::Low => low_count += 1,
+            }
+
+            let module = configuration.get_mut(&name).unwrap();
+            let output = match module {
+                Module::FlipFlop { on, .. } => {
+                    if pulse == Pulse::Low {
+                        *on = !*on;
+                        if *on {
+                            Some(Pulse::High)
+                        } else {
+                            Some(Pulse::Low)
+                        }
+                    } else {
+                        None
+                    }
+                }
+                Module::Conjuction { memory, .. } => {
+                    memory.insert(input.clone(), pulse);
+                    if memory.values().all(|&p| p == Pulse::High) {
                         Some(Pulse::Low)
                     } else {
                         Some(Pulse::High)
                     }
-                } else {
-                    None
                 }
-            }
-            Module::Conjuction { memory, .. } => {
-                memory.insert(input.clone(), pulse);
-                if memory.values().all(|&p| p == Pulse::High) {
-                    Some(Pulse::Low)
-                } else {
-                    Some(Pulse::High)
+                Module::Broadcast { .. } => Some(pulse),
+                Module::Output => None,
+            };
+            if let Some(output) = output {
+                for destination in module.destinations() {
+                    queue.push_back((name.clone(), destination, output));
                 }
-            }
-            Module::Broadcast { .. } => Some(pulse),
-            Module::Output => None,
-        };
-        if let Some(output) = output {
-            for destination in module.destinations() {
-                queue.push_back((name.clone(), destination, output));
             }
         }
     }
     low_count * high_count
 }
 
-fn part_two(configuration: &HashMap<String, Module>) -> u64 {
-    0
+fn part_two(configuration: &mut HashMap<String, Module>) -> u64 {
+    for i in 1.. {
+        let mut queue =
+            VecDeque::from([("button".to_string(), "broadcaster".to_string(), Pulse::Low)]);
+        while let Some(item) = queue.pop_front() {
+            let (input, name, pulse) = item;
+            if name == "xm" && pulse == Pulse::High {
+                dbg!(i, &input);
+            }
+
+            let module = configuration.get_mut(&name).unwrap();
+            let output = match module {
+                Module::FlipFlop { on, .. } => {
+                    if pulse == Pulse::Low {
+                        *on = !*on;
+                        if *on {
+                            Some(Pulse::High)
+                        } else {
+                            Some(Pulse::Low)
+                        }
+                    } else {
+                        None
+                    }
+                }
+                Module::Conjuction { memory, .. } => {
+                    memory.insert(input.clone(), pulse);
+                    if memory.values().all(|&p| p == Pulse::High) {
+                        Some(Pulse::Low)
+                    } else {
+                        Some(Pulse::High)
+                    }
+                }
+                Module::Broadcast { .. } => Some(pulse),
+                Module::Output => None,
+            };
+            if let Some(output) = output {
+                for destination in module.destinations() {
+                    queue.push_back((name.clone(), destination, output));
+                }
+            }
+        }
+    }
+    unreachable!();
 }
 
 fn main() {
